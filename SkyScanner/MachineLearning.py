@@ -11,6 +11,10 @@ input = 2 * features
 LearningRate = 0.01
 
 
+
+
+
+
 class net(nn.Module):
     def __init__(self, ):
         super(net, self).__init__()
