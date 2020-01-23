@@ -3,6 +3,7 @@ from time import sleep
 from json import loads
 from typing import List
 
+# try 0.1 szhilo update
 
 def get_session_key(country='US', currency='USD', locale='en-US', originPlace='SFO-sky',
                     destinationPlace='LHR-sky', outboundDate='2020-01-20', adults='1',
