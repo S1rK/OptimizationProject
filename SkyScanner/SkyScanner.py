@@ -3,7 +3,8 @@ from time import sleep
 from json import loads
 from typing import List
 
-# tal testing
+from SkyScanner.MachineLearning import try_function
+
 
 def get_session_key(country='US', currency='USD', locale='en-US', originPlace='SFO-sky',
                     destinationPlace='LHR-sky', outboundDate='2020-01-20', adults='1',
@@ -118,5 +119,6 @@ def default_poll_session_results() -> List[List[str]]:
 
 
 if __name__ == "__main__":
+    try_function()
     flights = default_poll_session_results()
     print(flights)
