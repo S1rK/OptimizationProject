@@ -3,10 +3,8 @@ from time import sleep
 from json import loads
 from typing import List
 
-from MachineLearning import try_function
-
-
-#shilo
+import MachineLearning
+from MachineLearning import learn
 
 
 def get_session_key(country='US', currency='USD', locale='en-US', originPlace='SFO-sky',
@@ -122,5 +120,6 @@ def default_poll_session_results() -> List[List[str]]:
 
 
 if __name__ == "__main__":
-    flights = default_poll_session_results()
-    print(flights)
+    learn(0)
+    # flights = default_poll_session_results()
+    # print(flights)
