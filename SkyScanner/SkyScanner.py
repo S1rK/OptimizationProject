@@ -3,8 +3,7 @@ from time import sleep
 from json import loads
 from typing import List
 
-import MachineLearning
-from MachineLearning import learn
+from SkyScanner.MachineLearning import learn
 
 
 def get_session_key(country='US', currency='USD', locale='en-US', originPlace='SFO-sky',
