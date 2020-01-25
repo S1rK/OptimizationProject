@@ -177,6 +177,10 @@ def get_flights(country='US', currency='USD', locale='en-US', originPlace='SFO-s
             print("------------------------------------------------------------------------------------------------")
 
 
+def flight_to_string(flight: array) -> str:
+    return f"price: {flight[0]}, departure time: {flight[1]}, arrival time: {flight[2]}, duration of the flight: {flight[3]}, number of stops: {flight[4]}"
+
+
 if __name__ == "__main__":
     # learn(0)
     flights_ = get_flights()

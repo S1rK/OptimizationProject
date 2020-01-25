@@ -15,7 +15,7 @@ def get_pref(msg: str = "pick your most important option", options=None) -> int:
     master.title("Getting Your Preferences")
     # change the window size
     max_len = max([len(option) for option in options]+[len(msg)])
-    master.geometry(f"{max_len*7}x{(len(options)+3)*35}")
+    # master.geometry(f"{max_len*7}x{(len(options)+3)*35}")
     # don't allow resizing in the x or y direction
     master.resizable(0, 0)
 

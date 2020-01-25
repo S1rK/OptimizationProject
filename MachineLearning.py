@@ -5,7 +5,8 @@ import numpy as np
 import torchvision
 from torch import optim
 import random
-from SkyScanner import attributes
+from SkyScanner import attributes, flight_to_string
+from GUI import get_priority
 
 # hyper : optimazer + Learning Rate
 # test 1: 5 random flights vs. 5 best of each features
@@ -171,7 +172,11 @@ def learn(flights):
     optimizer1 = optim.SGD(_net1.parameters(), lr=0.8)
     _net2 = net()
     optimizer2 = optim.SGD(_net2.parameters(), lr=0.5)
-    num_of_flights = 100
+    # num_of_flights = 100
+    num_of_flights = len(flights)
+
+    # TODO: put this priority vector to use
+    priority = np.array([flights[i] for i in get_priority([flight_to_string(flight) for flight in flights[:5]])])
 
     flights = np.random.rand(num_of_flights, features)
     np.random.shuffle(flights)
