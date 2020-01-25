@@ -3,7 +3,8 @@ from time import sleep
 import json
 from numpy import array
 
-from MachineLearning import learn
+
+attributes = ["Price", "Departure Time", "Arrival Time", "Flight Duration", "Number of stops"]
 
 
 def get_session_key(country='US', currency='USD', locale='en-US', originPlace='SFO-sky',

@@ -5,13 +5,14 @@ import numpy as np
 import torchvision
 from torch import optim
 import random
+from SkyScanner import attributes
 
 # hyper : optimazer + Learning Rate
 # test 1: 5 random flights vs. 5 best of each features
 # test 2: auto agent - always choose one feature - how many rounds need for learning
 # remember - need to be symetric, can put data1+data2=1, or data2+data1=0
 
-features = 5
+features = len(attributes)
 input = 2 * features
 epoches = 10
 learn_feature = 1
