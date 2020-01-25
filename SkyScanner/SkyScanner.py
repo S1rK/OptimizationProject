@@ -1,14 +1,15 @@
 import http.client
 from time import sleep
-from json import loads
+import json
 from typing import List
+from numpy import array
 
-from SkyScanner.MachineLearning import learn
+# from SkyScanner.MachineLearning import learn
 
 
 def get_session_key(country='US', currency='USD', locale='en-US', originPlace='SFO-sky',
-                    destinationPlace='LHR-sky', outboundDate='2020-01-20', adults='1',
-                    inboundDate='2020-01-25', cabinClass='business', children='0', infants='0') -> str:
+                    destinationPlace='LHR-sky', outboundDate='2020-02-01', adults='1',
+                    inboundDate='2020-02-10', cabinClass='business', children='0', infants='0') -> str:
     """
     Send POST msg to server tog et a session key.
     MUST
@@ -47,15 +48,15 @@ def get_session_key(country='US', currency='USD', locale='en-US', originPlace='S
     res = conn.getresponse()
     # print the response
     assert res.code == 201, "Problem with getting a session key:\n"+res.read().decode('utf-8')
-    print(res.code)
-    print(res.read().decode('utf-8'))
-    print(res.headers["Location"].split('/')[-1])
+    # print(res.code)
+    # print(res.read().decode('utf-8'))
+    # print(res.headers["Location"].split('/')[-1])
     # get the session key from the response and return it
     return res.headers["Location"].split('/')[-1]
 
 
 def poll_session_results(session_key: str, sortType='price', sortOrder='asc', duration='1800', pageIndex='0',
-                             pageSize='100') -> List[List[str]]:
+                             pageSize='100') -> array:
     """
     Sends a GET Poll session results request which returns a {pagesize} number of flights, sorted by {sortType} in
     {sortOrder} order.
@@ -83,42 +84,59 @@ def poll_session_results(session_key: str, sortType='price', sortOrder='asc', du
     parameters = '&'.join(parameters)
     # send the request
     conn.request("GET",
-                 f"/apiservices/pricing/uk2/v1.0/75233e42-4a01-42cb-9ee7-74a1229a45b9?{parameters}",
+                 f"/apiservices/pricing/uk2/v1.0/{session_key}?{parameters}",
                  headers=headers)
     # get the response
     res = conn.getresponse()
     # read the response
     data = res.read().decode('utf-8')
 
-    # print(data)
+    # make sure we got HTTP 200 OK response
+    assert res.code == 200, "Problem with getting a session's results:\n"+data
 
     # convert the response to json
-    data_j = loads(data)
-    # get the flights
-    flights = data_j["Itineraries"]
+    data_j = json.loads(data)
 
     # print(json.dumps(data_j, indent=4, sort_keys=True))
-    # print(json.dumps(flights, indent=4, sort_keys=True))
+
+    # get the flights
+    flights = data_j["Itineraries"]
+    legs = data_j["Legs"]
+
+    print(json.dumps(legs, indent=4, sort_keys=True))
 
     # create the flights properties list
-    flights_properties = [[flight["PricingOptions"][0]["Price"], flight["InboundLegId"], flight["OutboundLegId"]] for
-                          flight in flights]
+    flights_properties = array([array(
+        [flight["PricingOptions"][0]["Price"], leg["Departure"], leg["Arrival"], leg["Duration"], len(leg["Stops"])])
+                                for flight, leg in zip(flights, legs)])
 
     return flights_properties
 
 
-def default_poll_session_results() -> List[List[str]]:
+def default_poll_session_results() -> array:
+    # getting the session's key
     key = ""
     while key == "":
         try:
             key = get_session_key()
-        except AssertionError:
+            print(f"got a key: {key}.")
+        except AssertionError as e:
+            print(str(e))
             print("Failed getting a key. Trying again in 1 sec.")
             sleep(1)
-    return poll_session_results(key)
+    # getting the session's results
+    # key = "2b096243-5ea9-4a3d-b8ef-0dccefba4082"
+    results = None
+    while results is None:
+        try:
+            return poll_session_results(key)
+        except AssertionError as e:
+            print(str(e))
+            print("Failed getting session's results. Trying to get another key.")
 
 
 if __name__ == "__main__":
-    learn(0)
-    # flights = default_poll_session_results()
-    # print(flights)
+    # learn(0)
+    flights_ = default_poll_session_results()
+    print(flights_)
+

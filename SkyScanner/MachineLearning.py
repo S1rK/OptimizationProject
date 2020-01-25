@@ -11,7 +11,7 @@ import random
 # test 2: auto agent - always choose one feature - how many rounds need for learning
 # remember - need to be symetric, can put data1+data2=1, or data2+data1=0
 
-features = 3
+features = 5
 input = 2 * features
 epoches = 10
 learn_feature = 1
@@ -27,7 +27,7 @@ class net(nn.Module):
     def forward(self, x):
         x = x.view(-1, self.features)
         # x = F.sigmoid(self.fc2(x))
-        x =  self.fc3(x)
+        x = self.fc3(x)
         return F.log_softmax(x, dim=1)
 
 
