@@ -252,7 +252,7 @@ def learn(flights):
             s2 = 0
             for k in range(0, runs):
                 s1 =s1+ auto_agent_svm(flights, rand_priority, 0.1*i+0.1, 0.1*j+0.1)
-                s2 =s1+ auto_agent_svm(flights, smart_priority, 0.1*i+0.1, 0.1*j+0.1)
+                s2 =s2+ auto_agent_svm(flights, smart_priority, 0.1*i+0.1, 0.1*j+0.1)
             best_lr1_svm[i][j] = s1/runs
             if max1<best_lr1_svm[i][j]:
                 max1 = best_lr1_svm[i][j]
