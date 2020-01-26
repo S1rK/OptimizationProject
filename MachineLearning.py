@@ -216,8 +216,8 @@ def learn(flights):
     best_lr2 = np.zeros(len(lr_p))
     # test 1:nets: smart choise vs. rand choise
 
-    # for lr in range(0, len(lr_p)):
-    for lr in range(0, 1):
+    for lr in range(0, len(lr_p)):
+    # for lr in range(0, 1):
         s1 = 0
         s2 = 0
         for i in range(0, runs):
@@ -235,7 +235,7 @@ def learn(flights):
     print(max(best_lr2))
 
     # test 2:svm: smart choise vs. rand choise
-    auto_agent_svm(flights, rand_priority, 0.8)
-    auto_agent_svm(flights, smart_priority, 0.8)
+    # auto_agent_svm(flights, rand_priority, 0.8)
+    # auto_agent_svm(flights, smart_priority, 0.8)
 
     print("here!")
