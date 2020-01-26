@@ -88,7 +88,7 @@ def auto_agent_net(flights, _net, optimizer, learn_idx):
             if i != j:
                 c = np.concatenate([flights[learn_idx[i]], flights[learn_idx[j]]], axis=0)
                 data_to_learn = np.append(data_to_learn, [c], axis=0)
-                if flights[learn_idx[i]][learn_feature] > flights[learn_idx[j]][learn_feature]:
+                if flights[learn_idx[i]][learn_feature] < flights[learn_idx[j]][learn_feature]:
                     labels = np.append(labels, [[1]], axis=0)
                 else:
                     labels = np.append(labels, [[0]], axis=0)
@@ -122,80 +122,80 @@ def auto_agent_net(flights, _net, optimizer, learn_idx):
     test_set = [(x, y) for x, y in zip(data_to_test, labels_test)]
     return test_net(_net, test_set)
 
+def classified(x, vec, bias):
+    res = np.zeros(3)
+    for i in range(0, 2):
+        res[i] = np.dot(vec[i], x) + bias[i]
+    return np.argmax(res)
 
-def auto_agent_svm(flights, learn_idx, lr):
-#     vec_svm = np.zeros((2, input))
-#     bias_svm = np.zeros(2)
-#     n = len(flights)
-#
-#     # pre-learning
-#     data_to_learn = np.ndarray((0, features * 2))
-#     labels = np.ndarray((0, 1), dtype=int)
-#     for i in range(0, features):
-#         for j in range(0, features):
-#             if i != j:
-#                 c = np.concatenate([flights[learn_idx[learn_feature]], flights[learn_idx[i]]], axis=0)
-#                 data_to_learn = np.append(data_to_learn, [c], axis=0)
-#                 labels = np.append(labels, [[1]], axis=0)
-#                 c = np.concatenate([flights[learn_idx[i]], flights[learn_idx[learn_feature]]], axis=0)
-#                 data_to_learn = np.append(data_to_learn, [c], axis=0)
-#                 labels = np.append(labels, [[0]], axis=0)
-#
-#     # learning
-#     for k in range(0, epoches):
-#         for i in range(0, N):
-#             x = train_y_x[i][1:9]
-#             y = int(train_y_x[i][0])
-#             # svm
-#             y_hat_svm = classified(x, vec_svm, bias_svm)
-#             if y_hat_svm != y:
-#                 vec_svm[y, :] = (1 - eta_svm * lam_svm) * vec_svm[y, :] + eta_svm * x
-#                 vec_svm[y_hat_svm, :] = (1 - eta_svm * lam_svm) * vec_svm[y_hat_svm, :] - eta_svm * x
-#                 bias_svm[y] = (1 - eta_svm * lam_svm) * bias_svm[y] + eta_svm
-#                 bias_svm[y_hat_svm] = (1 - eta_svm * lam_svm) * bias_svm[y_hat_svm] - eta_svm
-#                 for j in range(0, 2):
-#                     if j != y and j != y_hat_svm:
-#                         vec_svm[j, :] = (1 - eta_svm * lam_svm) * vec_svm[j, :]
-#                         bias_svm[j] = (1 - eta_svm * lam_svm) * bias_svm[j]
-#
-#
-#     for i in range(0, N_test):
-#         x = test[i][0:8]
-#         y_per = classified(x, vec_per, bias_per)
-#         y_svm = classified(x, vec_svm, bias_svm)
-#         y_pa = classified(x, vec_pa, bias_pa)
-#         print(f"perceptron: {y_per}, svm: {y_svm}, pa: {y_pa}")
-#
-#
-#
-#     data_to_learn = torch.FloatTensor(data_to_learn)
-#     labels = torch.IntTensor(labels)
-#     labels = labels.to(dtype=torch.int64)
-#     training_set = [(x, y) for x, y in zip(data_to_learn, labels)]
-#     # print(training_set)
-#     for i in range(0, epoches):
-#         # print("epoch: " + str(i))
-#         train_net(_net, optimizer, training_set)
-#
-#     # pre - testing
-#     data_to_test = np.ndarray((0, features * 2))
-#     labels_test = np.ndarray((0, 1), dtype=int)
-#     for i in range(0, n):
-#         for j in range(0, n):
-#             if i != j and check(i, learn_idx):
-#                 c = np.concatenate([flights[i], flights[j]], axis=0)
-#                 data_to_test = np.append(data_to_test, [c], axis=0)
-#                 if flights[i][learn_feature] < flights[j][learn_feature]:
-#                     labels_test = np.append(labels_test, [[1]], axis=0)
-#                 else:
-#                     labels_test = np.append(labels_test, [[0]], axis=0)
-#     # testing
-#     data_to_test = torch.FloatTensor(data_to_test)
-#     labels_test = torch.IntTensor(labels_test)
-#     labels_test = labels_test.to(dtype=torch.int64)
-#     test_set = [(x, y) for x, y in zip(data_to_test, labels_test)]
-#     return test_net(_net, test_set)
-    print("svm...")
+
+def auto_agent_svm(flights, learn_idx, lr,lam):
+    vec_svm = np.zeros((2, input))
+    bias_svm = np.zeros(2)
+    n = len(flights)
+
+    # pre-learning
+    data_to_learn = np.ndarray((0, features * 2))
+    labels = np.ndarray((0, 1), dtype=int)
+    for i in range(0, len(learn_idx)):
+        for j in range(0, len(learn_idx)):
+            if i != j:
+                c = np.concatenate([flights[learn_idx[i]], flights[learn_idx[j]]], axis=0)
+                data_to_learn = np.append(data_to_learn, [c], axis=0)
+                if flights[learn_idx[i]][learn_feature] < flights[learn_idx[j]][learn_feature]:
+                    labels = np.append(labels, [[1]], axis=0)
+                else:
+                    labels = np.append(labels, [[0]], axis=0)
+
+    # learning
+    for k in range(0, epoches):
+        for i in range(0, len(data_to_learn)):
+            x = data_to_learn[i]
+            y = labels[i]
+            y_hat_svm = classified(x, vec_svm, bias_svm)
+            if y_hat_svm != y:
+                vec_svm[y, :] = (1 - lr * lam) * vec_svm[y, :] + lr * x
+                vec_svm[y_hat_svm, :] = (1 - lr * lam) * vec_svm[y_hat_svm, :] - lr * x
+                bias_svm[y] = (1 - lr * lam) * bias_svm[y] + lr
+                bias_svm[y_hat_svm] = (1 - lr * lam) * bias_svm[y_hat_svm] - lr
+                for j in range(0, 2):
+                    if j != y and j != y_hat_svm:
+                        vec_svm[j, :] = (1 - lr * lam) * vec_svm[j, :]
+                        bias_svm[j] = (1 - lr * lam) * bias_svm[j]
+
+
+    for i in range(0, N_test):
+        x = test[i][0:8]
+        y_svm = classified(x, vec_svm, bias_svm)
+        print(f"perceptron: {y_per}, svm: {y_svm}, pa: {y_pa}")
+
+
+
+    data_to_learn = torch.FloatTensor(data_to_learn)
+    labels = torch.IntTensor(labels)
+    labels = labels.to(dtype=torch.int64)
+    training_set = [(x, y) for x, y in zip(data_to_learn, labels)]
+    # print(training_set)
+    for i in range(0, epoches):
+        # print("epoch: " + str(i))
+        train_net(_net, optimizer, training_set)
+
+    # testing
+    data_to_test = np.ndarray((0, features * 2))
+    test_succ = 0
+    for i in range(0, n):
+        for j in range(0, n):
+            if i != j and check(i, learn_idx):
+                c = np.concatenate([flights[i], flights[j]], axis=0)
+                y_hat_svm = classified(c, vec_svm, bias_svm)
+                if flights[i][learn_feature] < flights[j][learn_feature]:
+                    if y_hat_svm==1:
+                        test_succ = test_succ+1
+                else:
+                    if y_hat_svm==0:
+                        test_succ = test_succ+1
+
+    return test_succ/len(flights)
 
 
 def get_smart_priorty(flights, num):
@@ -233,7 +233,8 @@ def learn(flights):
     best_lr2 = np.zeros(len(lr_p))
     # test 1:nets: smart choise vs. rand choise
 
-    for lr in range(0, len(lr_p)):
+    # for lr in range(0, len(lr_p)):
+    for lr in range(0, 1):
         s1 = 0
         s2 = 0
         for i in range(0, runs):
