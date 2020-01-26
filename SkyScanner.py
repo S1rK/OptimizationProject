@@ -5,7 +5,7 @@ from numpy import array
 
 
 # attributes = ["Price", "Departure Time", "Arrival Time", "Flight Duration", "Number of stops"]
-attributes = ["Price", "Departure Time", "Arrival Time", "Flight Duration", "Number of stops"]
+attributes = ["Price", "Flight Duration", "Number of stops"]
 
 def get_session_key(country='US', currency='USD', locale='en-US', originPlace='SFO-sky',
                     destinationPlace='LHR-sky', outboundDate='2020-02-01', adults='1',
