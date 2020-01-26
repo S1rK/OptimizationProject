@@ -4,8 +4,8 @@ import json
 from numpy import array
 
 
+# attributes = ["Price", "Departure Time", "Arrival Time", "Flight Duration", "Number of stops"]
 attributes = ["Price", "Departure Time", "Arrival Time", "Flight Duration", "Number of stops"]
-
 
 def get_session_key(country='US', currency='USD', locale='en-US', originPlace='SFO-sky',
                     destinationPlace='LHR-sky', outboundDate='2020-02-01', adults='1',
@@ -106,9 +106,13 @@ def poll_session_results(session_key: str, sortType='price', sortOrder='asc', du
     legs = data_j["Legs"]
 
     # create the flights properties list
-    flights_properties = array([array(
-        [float(flight["PricingOptions"][0]["Price"]), leg["Departure"], leg["Arrival"], int(leg["Duration"]),
-         int(len(leg["Stops"]))]) for flight, leg in zip(flights, legs)])
+    # flights_properties = array([array(
+    #         [float(flight["PricingOptions"][0]["Price"]), leg["Departure"], leg["Arrival"], int(leg["Duration"]),
+    #          int(len(leg["Stops"]))]) for flight, leg in zip(flights, legs)])
+
+    flights_properties = array(
+        [array([float(flight["PricingOptions"][0]["Price"]), int(leg["Duration"]), int(len(leg["Stops"]))]) for
+         flight, leg in zip(flights, legs)])
 
     return flights_properties
 
