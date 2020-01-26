@@ -152,7 +152,7 @@ def learn(flights):
 
 
 
-    runs = 1
+    runs = 10
     lr_p = np.array([0.1 ,0.2 ,0.3 ,0.4 ,0.5 ,0.6 ,0.7 ,0.8 ,0.9])
     best_lr1 = np.zeros(len(lr_p))
     best_lr2 = np.zeros(len(lr_p))
