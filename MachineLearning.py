@@ -177,7 +177,6 @@ def learn(flights):
 
     # TODO: put this priority vector to use
     priority = np.array([flights[i] for i in get_priority([flight_to_string(flight) for flight in flights[:5]])])
-    exit()
 
     flights = np.random.rand(num_of_flights, features)
     np.random.shuffle(flights)
