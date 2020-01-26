@@ -163,23 +163,6 @@ def auto_agent_svm(flights, learn_idx, lr,lam):
                         vec_svm[j, :] = (1 - lr * lam) * vec_svm[j, :]
                         bias_svm[j] = (1 - lr * lam) * bias_svm[j]
 
-
-    for i in range(0, N_test):
-        x = test[i][0:8]
-        y_svm = classified(x, vec_svm, bias_svm)
-        print(f"perceptron: {y_per}, svm: {y_svm}, pa: {y_pa}")
-
-
-
-    data_to_learn = torch.FloatTensor(data_to_learn)
-    labels = torch.IntTensor(labels)
-    labels = labels.to(dtype=torch.int64)
-    training_set = [(x, y) for x, y in zip(data_to_learn, labels)]
-    # print(training_set)
-    for i in range(0, epoches):
-        # print("epoch: " + str(i))
-        train_net(_net, optimizer, training_set)
-
     # testing
     data_to_test = np.ndarray((0, features * 2))
     test_succ = 0
