@@ -204,8 +204,7 @@ def get_smart_priorty(flights, num):
 
 def learn(flights):
     num_of_flights = len(flights)
-    print("num flights: ")
-    print(num_of_flights)
+    print(f"num flights: {num_of_flights}")
 
     # TODO: put this priority vector to use
     # priority = np.array([flights[i] for i in get_priority([flight_to_string(flight) for flight in flights[:5]])])
@@ -239,31 +238,68 @@ def learn(flights):
 
     # test 2:svm: smart choise vs. rand choise
 
-    n=9
+    n = 9
     runs = 10
-    best_lr1_svm = np.zeros((n,n))
-    best_lr2_svm = np.zeros((n,n))
+    step = 0.005
+    end = 0.275
+    print(f"num of iter: {end / step}")
+    # best_lr1_svm = np.zeros((int(end/step), int(end/step)))
+    # best_lr2_svm = np.zeros((int(end/step), int(end/step)))
 
-    max1 = 0
-    max2 = 0
-    for i in range(0,n):
-        for j in range(0,n):
-            s1 = 0
-            s2 = 0
+    max1 = max2 = 0
+    max1_eta = max1_lambda = 0
+    max2_eta = max2_lambda = 0
+
+    i = 0
+
+    from datetime import datetime, timedelta
+    start_time = datetime.now()
+
+    print(f"starting time: {start_time}")
+
+    for eta in np.arange(step, end, step):
+        for lam in np.arange(step, end, step):
+            # print(i,  j)
+            s1 = s2 = 0
+            # eta = float(float(i) / (float(num_of_iter)/float(n)))
+            # lam = float(float(j) / (float(num_of_iter)/float(n)))
             for k in range(0, runs):
-                s1 =s1+ auto_agent_svm(flights, rand_priority, 0.1*i+0.1, 0.1*j+0.1)
-                s2 =s2+ auto_agent_svm(flights, smart_priority, 0.1*i+0.1, 0.1*j+0.1)
-            best_lr1_svm[i][j] = s1/runs
-            if max1<best_lr1_svm[i][j]:
-                max1 = best_lr1_svm[i][j]
-            best_lr2_svm[i][j] = s2/runs
-            if max2<best_lr2_svm[i][j]:
-                max2 = best_lr2_svm[i][j]
+                s1 = s1 + auto_agent_svm(flights, rand_priority, eta, lam)
+                s2 = s2 + auto_agent_svm(flights, smart_priority, eta, lam)
 
-    print(best_lr1_svm)
-    print(best_lr2_svm)
+            curr_best_lr1_svm = float(float(s1)/float(runs))
+            curr_best_lr2_svm = float(float(s2) / float(runs))
 
-    print(max1)
-    print(max2)
+            if curr_best_lr1_svm > max1:
+                max1 = curr_best_lr1_svm
+                max1_eta = eta
+                max1_lambda = lam
+
+            if curr_best_lr2_svm > max2:
+                max2 = curr_best_lr2_svm
+                max2_eta = eta
+                max2_lambda = lam
+
+            if eta == step and lam == step:
+                time_to_end = (datetime.now()-start_time).seconds*(end/step)*(end/step)/60
+                print(f"Estimated Time To Ending: {time_to_end} min")
+                print(f"Estimated Time Of Ending: {start_time+timedelta(minutes=time_to_end)}")
+
+            # best_lr1_svm[i][j] = s1/runs
+            # if max1<best_lr1_svm[i][j]:
+            #     max1 = best_lr1_svm[i][j]
+            #     max1_i = i
+            #     max1_j = j
+            # best_lr2_svm[i][j] = s2/runs
+            # if max2<best_lr2_svm[i][j]:
+            #     max2 = best_lr2_svm[i][j]
+            #     max2_i = i
+            #     max2_j = j
+
+    # print(best_lr1_svm)
+    # print(best_lr2_svm)
+
+    print(f"rand\npercent:{max1}, eta:{max1_eta}, lambda:{max1_lambda}\n")
+    print(f"smart\npercent:{max2}, eta:{max2_eta}, lambda:{max2_lambda}\n")
 
     print("here!")
