@@ -171,7 +171,7 @@ def auto_agent_svm(flights, learn_idx, lr, lam):
     for i in range(0, n):
         for j in range(0, n):
             if i != j and check(i, learn_idx):
-                test_sum = test_sum + 1
+                test_sum = test_sum+1
                 c = np.concatenate([flights[i], flights[j]], axis=0)
                 y_hat_svm = classified(c, vec_svm, bias_svm)
                 if flights[i][learn_feature] < flights[j][learn_feature]:
@@ -181,7 +181,6 @@ def auto_agent_svm(flights, learn_idx, lr, lam):
                     if y_hat_svm == 0:
                         test_succ = test_succ + 1
 
-    print(vec_svm)
     return test_succ / test_sum
 
 
@@ -240,33 +239,31 @@ def learn(flights):
 
     # test 2:svm: smart choise vs. rand choise
 
-    n = 4
+    n=9
     runs = 10
-    best_lr1_svm = np.zeros((n, n))
-    best_lr2_svm = np.zeros((n, n))
+    best_lr1_svm = np.zeros((n,n))
+    best_lr2_svm = np.zeros((n,n))
 
-    # max1 = 0
-    # max2 = 0
-    # for i in range(0,n):
-    #     for j in range(0,n):
-    #         s1 = 0
-    #         s2 = 0
-    #         for k in range(0, runs):
-    #             s1 =s1+
-    #         best_lr1_svm[i][j] = s1/runs
-    #         if max1<best_lr1_svm[i][j]:
-    #             max1 = best_lr1_svm[i][j]
-    #         best_lr2_svm[i][j] = s2/runs
-    #         if max2<best_lr2_svm[i][j]:
-    #             max2 = best_lr2_svm[i][j]
+    max1 = 0
+    max2 = 0
+    for i in range(0,n):
+        for j in range(0,n):
+            s1 = 0
+            s2 = 0
+            for k in range(0, runs):
+                s1 =s1+ auto_agent_svm(flights, rand_priority, 0.1*i+0.1, 0.1*j+0.1)
+                s2 =s2+ auto_agent_svm(flights, smart_priority, 0.1*i+0.1, 0.1*j+0.1)
+            best_lr1_svm[i][j] = s1/runs
+            if max1<best_lr1_svm[i][j]:
+                max1 = best_lr1_svm[i][j]
+            best_lr2_svm[i][j] = s2/runs
+            if max2<best_lr2_svm[i][j]:
+                max2 = best_lr2_svm[i][j]
 
-    s1 = auto_agent_svm(flights, rand_priority,0.005,0.04)
-    s2 = auto_agent_svm(flights, smart_priority,0.21,0.185)
+    print(best_lr1_svm)
+    print(best_lr2_svm)
 
-
-    print(s1)
-    print(s2)
-    print
-
+    print(max1)
+    print(max2)
 
     print("here!")
