@@ -106,8 +106,22 @@ class SVM(object):
         return 0
 
 def from_rank_to_train_set(flights):
-    # TODO:
-    return 0
+    data_to_learn = np.ndarray((0, features * 2))
+    labels = np.ndarray((0, 1), dtype=int)
+    for i in range(0, len(flights)):
+        for j in range(i+1, len(flights)):
+            if i != j:
+                c1 = np.concatenate([flights[i], flights[j]], axis=0)
+                data_to_learn = np.append(data_to_learn, [c1], axis=0)
+                labels = np.append(labels, [[1]], axis=0)
+                c2 = np.concatenate([flights[j], flights[i]], axis=0)
+                data_to_learn = np.append(data_to_learn, [c2], axis=0)
+                labels = np.append(labels, [[0]], axis=0)
+    data_to_learn = torch.FloatTensor(data_to_learn)
+    labels = torch.IntTensor(labels)
+    labels = labels.to(dtype=torch.int64)
+    training_set = [(x, y) for x, y in zip(data_to_learn, labels)]
+    return training_set
 
 
 def learn(flights):
