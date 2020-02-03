@@ -19,6 +19,14 @@ epoches = 10
 learn_feature = 0
 
 
+def fake_user_comparator(flight1, flight2):
+    s1 = flight1[0] + flight1[1] + flight1[2]
+    s2 = flight2[0] + flight2[1] + flight2[2]
+    if s1 > s2:
+        return 1
+    return 0
+
+
 class net(nn.Module):
     def __init__(self, ):
         super(net, self).__init__()
@@ -32,50 +40,48 @@ class net(nn.Module):
         x = self.fc3(x)
         return F.log_softmax(x, dim=1)
 
-
-def train_net(model, optimizer, training_set):
-    model.train()
-    optimizer.zero_grad()
-    train_loss = 0
-    for x, y in training_set:
-        output = model(x)
+    def train(self, optimizer, x, y):
+        self.train()
+        # optimizer.zero_grad()
+        output = self(x)
         loss = F.nll_loss(output, y)
         loss.backward()
         optimizer.step()
-        train_loss += F.nll_loss(output, y, size_average=False).item()
 
-    # print(train_loss/len(training_set))
-
-
-def test_net(model, training_set):
-    model.eval()
-    test_loss = 0
-    test_correct = 0
-    n = len(training_set)
-    for x, y in training_set:
-        output = model(x)
+    def prediction(self, x):
+        self.eval()
+        output = self(x)
         pred = output.max(1, keepdim=True)[1]  # get the index of the max log-probability
-        test_loss += F.nll_loss(output, y, size_average=False).item()
-        test_correct += pred.eq(y.view_as(pred)).cpu().sum()
-    test_loss /= n
-    # print('Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(test_loss, test_correct,
-    #                                                                          n,
-    #                                                                          100. * test_correct / n))
-    return int(test_correct) / n
+        return pred
 
 
-def prediction(model, data):
-    model.eval()
-    output = model(data)
-    pred = output.max(1, keepdim=True)[1]  # get the index of the max log-probability
-    return pred
+class SVM(object):
+    def __init__(self, eta=0.01, lambd=0.075):
+        self.num_of_class = 2
+        self.__w = np.zeros((self.num_of_class, input))
+        self.__b = np.zeros(self.num_of_class)
+        for i in range(self.num_of_class):
+            self.__b[i] = 1.0
+        self.__eta = eta
+        self.__lambda = lambd
 
+    def train(self, x, y):
+        y_hat = int(self.prediction(x))
 
-def check(idx, arr):
-    for i in range(0, len(arr)):
-        if arr[i] == idx:
-            return False
-    return True
+        self.__w[y, :] = (1 - self.__eta * self.__lambda) * self.__w[y, :] + self.__eta * x
+        self.__w[y_hat, :] = (1 - self.__eta * self.__lambda) * self.__w[y, :] - self.__eta * x
+        self.__b[y] = self.__b[y] + self.__eta
+        self.__b[y_hat] = self.__b[y_hat] - self.__eta
+
+        for i in range(self.num_of_class):
+            if i != y and i != y_hat:
+                self.__w[i, :] = (1 - self.__eta * self.__lambda) * self.__w[i, :]
+
+    def prediction(self, x):
+        res = np.dot(self.__w, np.transpose(x))
+        for i in range(self.num_of_class):
+            res[i] = res[i] + self.__b[i]
+        return np.argmax(res)
 
 
 def auto_agent_net(flights, _net, optimizer, learn_idx):
@@ -122,12 +128,6 @@ def auto_agent_net(flights, _net, optimizer, learn_idx):
     test_set = [(x, y) for x, y in zip(data_to_test, labels_test)]
     return test_net(_net, test_set)
 
-
-def classified(x, vec, bias):
-    res = np.zeros(3)
-    for i in range(0, 2):
-        res[i] = np.dot(vec[i], x) + bias[i]
-    return np.argmax(res)
 
 
 def auto_agent_svm(flights, learn_idx, lr, lam):
@@ -260,13 +260,11 @@ def learn(flights):
     #         if max2<best_lr2_svm[i][j]:
     #             max2 = best_lr2_svm[i][j]
 
-    s1 = auto_agent_svm(flights, rand_priority,0.005,0.04)
-    s2 = auto_agent_svm(flights, smart_priority,0.21,0.185)
-
+    s1 = auto_agent_svm(flights, rand_priority, 0.005, 0.04)
+    s2 = auto_agent_svm(flights, smart_priority, 0.21, 0.185)
 
     print(s1)
     print(s2)
     print
-
 
     print("here!")
