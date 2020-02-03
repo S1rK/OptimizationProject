@@ -68,7 +68,7 @@ class net(nn.Module):
         pred = output.max(1, keepdim=True)[1]  # get the index of the max log-probability
         return pred
 
-    def ranking_flights(self,flights):
+    def ranking_flights(self, flights):
         # TODO:
         return 0
 
@@ -100,16 +100,16 @@ class SVM(object):
             res[i] = res[i] + self.__b[i]
         return np.argmax(res)
 
-
-    def ranking_flights(self,flights):
+    def ranking_flights(self, flights):
         # TODO:
         return 0
+
 
 def from_rank_to_train_set(flights):
     data_to_learn = np.ndarray((0, features * 2))
     labels = np.ndarray((0, 1), dtype=int)
     for i in range(0, len(flights)):
-        for j in range(i+1, len(flights)):
+        for j in range(i + 1, len(flights)):
             if i != j:
                 c1 = np.concatenate([flights[i], flights[j]], axis=0)
                 data_to_learn = np.append(data_to_learn, [c1], axis=0)
@@ -129,18 +129,17 @@ def learn(flights):
 
     good_ranking_flights = ranking_flights_by_user(flights)
 
-
     _net = net()
     optimizer = optim.SGD(_net.parameters(), lr=0.01)
 
     _svm = SVM()
 
-    for i in range (0,epoch):
+    for i in range(0, epoch):
         svm_rank = _svm.ranking_flights(flights)
         net_rank = _net.ranking_flights(flights)
 
-        svm_top_5 = ranking_flights_by_user(svm_rank[0-5])
-        net_top_5 = ranking_flights_by_user(net_rank[0-5])
+        svm_top_5 = ranking_flights_by_user(svm_rank[0 - 5])
+        net_top_5 = ranking_flights_by_user(net_rank[0 - 5])
 
         # TODO: put here method for evaluation the ranking
 
@@ -148,9 +147,6 @@ def learn(flights):
         net_set_train = from_rank_to_train_set(net_top_5)
 
         _svm.train_svm(svm_set_train)
-        _net.train_net(optimizer,net_set_train)
-
-
-
+        _net.train_net(optimizer, net_set_train)
 
     print("here!")
