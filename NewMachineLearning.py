@@ -15,7 +15,7 @@ from GUI import get_priority
 
 features = len(attributes)
 input = 2 * features
-epoches = 10
+epoch = 10
 learn_feature = 0
 
 
@@ -69,6 +69,8 @@ class net(nn.Module):
         return pred
 
     def ranking_flights(self,flights):
+        # TODO:
+        return 0
 
 
 class SVM(object):
@@ -100,14 +102,41 @@ class SVM(object):
 
 
     def ranking_flights(self,flights):
+        # TODO:
+        return 0
+
+def from_rank_to_train_set(flights):
+    # TODO:
+    return 0
 
 
 def learn(flights):
     num_of_flights = len(flights)
-    print("num flights: ")
-    print(num_of_flights)
+
+    good_ranking_flights = ranking_flights_by_user(flights)
+
 
     _net = net()
     optimizer = optim.SGD(_net.parameters(), lr=0.01)
+
+    _svm = SVM()
+
+    for i in range (0,epoch):
+        svm_rank = _svm.ranking_flights(flights)
+        net_rank = _net.ranking_flights(flights)
+
+        svm_top_5 = ranking_flights_by_user(svm_rank[0-5])
+        net_top_5 = ranking_flights_by_user(net_rank[0-5])
+
+        # TODO: put here method for evaluation the ranking
+
+        svm_set_train = from_rank_to_train_set(svm_top_5)
+        net_set_train = from_rank_to_train_set(net_top_5)
+
+        _svm.train_svm(svm_set_train)
+        _net.train_net(optimizer,net_set_train)
+
+
+
 
     print("here!")
