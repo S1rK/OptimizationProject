@@ -20,7 +20,13 @@ epoch = 10
 learn_feature = 0
 
 
-def rank_by_predicted_comparator(flights, comparator: Callable):
+def rank_by_predicted_comparator(flights: np.array, comparator: Callable[[np.array, np.array], int]):
+    """
+
+    :param flights:
+    :param comparator:
+    :return:
+    """
     length = len(flights)
     flights_ranks = [0 for _ in range(length)]
     for i in range(0, length):
@@ -32,7 +38,13 @@ def rank_by_predicted_comparator(flights, comparator: Callable):
     return [f for f, _ in sorted(zip(flights, flights_ranks), key=lambda pair: pair[1])]
 
 
-def sum_automatic_user(flight1, flight2) -> int:
+def sum_automatic_user(flight1: np.array, flight2: np.array) -> int:
+    """
+    An automatic user deciding only by min sum of attributes of flights.
+    :param flight1: first flight.
+    :param flight2: second flight.
+    :return: 0 if it prefer flight1, 1 if it prefer flight2.
+    """
     s1 = flight1[0] + flight1[1] + flight1[2]
     s2 = flight2[0] + flight2[1] + flight2[2]
     if s1 > s2:
@@ -40,20 +52,41 @@ def sum_automatic_user(flight1, flight2) -> int:
     return 0
 
 
-def greedy_automatic_user(flight1, flight2) -> int:
-    return int(flight1[0]>flight2[0])
+def greedy_automatic_user(flight1: np.array, flight2: np.array) -> int:
+    """
+    An automatic user deciding only by min price of flights.
+    :param flight1: first flight.
+    :param flight2: second flight.
+    :return: 0 if it prefer flight1, 1 if it prefer flight2.
+    """
+    return int(flight1[0] > flight2[0])
 
 
-def ranking_flights_by_automatic_user(flights, automatic_user: Callable):
+def price_per_duration_automatic_user(flight1: np.array, flight2: np.array) -> int:
+    """
+    An automatic user deciding only by min (1 + number of connections) * price to duration ratio
+    (min (1+number of connections)*price/duration) of flights.
+    :param flight1: first flight.
+    :param flight2: second flight.
+    :return: 0 if it prefer flight1, 1 if it prefer flight2.
+    """
+    f1 = (1 + flight1[2]) * flight1[0] / flight1[1]
+    f2 = (1 + flight2[2]) * flight2[0] / flight2[1]
+    return int(f1 > f2)
+
+
+def ranking_flights_by_automatic_user(flights: np.array, automatic_user: Callable[[np.array, np.array], int]):
     length = len(flights)
     for i in range(0, length):
         max_index = i
         for j in range(i, length):
             if automatic_user(flights[max_index], flights[j]) == 1:
                 max_index = j
-        temp = flights[i]
-        flights[i] = flights[max_index]
-        flights[max_index] = temp
+        # temp = flights[i]
+        # flights[i] = flights[max_index]
+        # flights[max_index] = temp
+        # swap between them
+        flights[i], flights[max_index] = flights[max_index], flights[i]
     return flights
 
 
@@ -146,7 +179,24 @@ def evaluate_ranking(real_ranking, predicted_ranking):
     return ham_dis
 
 
-def learn(flights):
+def evaluate_model_by_auto_user(validation_set: np.array, auto_user_comparator: Callable[[np.array, np.array], int],
+                                model_comparator: Callable[[np.array, np.array], int]) -> float:
+    length = len(validation_set)
+    success = 0
+    num_of_iter = 0
+    for i in range(length):
+        flight1 = flights[i]
+        for j in range(i+1, length):
+            flight2 = flights[j]
+            if auto_user_comparator(flight1, flight2) == model_comparator(flight1, flight2):
+                success += 1
+            if auto_user_comparator(flight2, flight1) == model_comparator(flight2, flight1):
+                success += 1
+            num_of_iter += 1
+    return success / (2 * num_of_iter)
+
+
+def learn(flights: np.array):
     num_of_flights = len(flights)
 
     good_ranking_flights = ranking_flights_by_automatic_user(flights, sum_automatic_user)
@@ -167,8 +217,10 @@ def learn(flights):
         """
         SHOULD WE REALLY EVALUATE ONLY BY RANKING, AND NOT BY PARIS AND THEIR COMPARING?
         """
-        svm_eval = evaluate_ranking(good_ranking_flights, svm_top_5)
-        net_eval = evaluate_ranking(good_ranking_flights, net_top_5)
+        # svm_eval = evaluate_ranking(good_ranking_flights, svm_top_5)
+        # net_eval = evaluate_ranking(good_ranking_flights, net_top_5)
+        svm_eval = evaluate_model_by_auto_user(flights[5:], sum_automatic_user, _svm.prediction)
+        net_eval = evaluate_model_by_auto_user(flights[5:], sum_automatic_user, _net.prediction)
 
         svm_set_train = from_rank_to_train_set(svm_top_5)
         net_set_train = from_rank_to_train_set(net_top_5)
@@ -191,4 +243,3 @@ if __name__ == "__main__":
     print("--------------------------")
     ranked = ranking_flights_by_automatic_user(fs2, greedy_automatic_user)
     print("\n".join([flight_to_string(f) for f in ranked]))
-
