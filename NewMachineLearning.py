@@ -7,6 +7,7 @@ from torch import optim
 import random
 from SkyScanner import attributes, flight_to_string
 from GUI import get_priority
+from typing import Callable
 
 # hyper : optimazer + Learning Rate
 # test 1: 5 random flights vs. 5 best of each features
@@ -19,7 +20,19 @@ epoch = 10
 learn_feature = 0
 
 
-def fake_user_comparator(flight1, flight2):
+def rank_by_predicted_comparator(flights, comparator: Callable):
+    length = len(flights)
+    flights_ranks = [0 for _ in range(length)]
+    for i in range(0, length):
+        for j in range(i, length):
+            if comparator(flights[i], flights[j]) == 0:
+                flights_ranks[i] += 1
+            else:
+                flights_ranks[j] += 1
+    return [f for f, _ in sorted(zip(flights, flights_ranks), key=lambda pair: pair[1])]
+
+
+def sum_automatic_user(flight1, flight2) -> int:
     s1 = flight1[0] + flight1[1] + flight1[2]
     s2 = flight2[0] + flight2[1] + flight2[2]
     if s1 > s2:
@@ -27,16 +40,20 @@ def fake_user_comparator(flight1, flight2):
     return 0
 
 
-def ranking_flights_by_user(flights):
-    len = len(flights)
-    for i in range(0, len):
-        max = i
-        for j in range(i, len):
-            if fake_user_comparator(flights[max], flights[j]) == 1:
-                max = j
+def greedy_automatic_user(flight1, flight2) -> int:
+    return int(flight1[0]>flight2[0])
+
+
+def ranking_flights_by_automatic_user(flights, automatic_user: Callable):
+    length = len(flights)
+    for i in range(0, length):
+        max_index = i
+        for j in range(i, length):
+            if automatic_user(flights[max_index], flights[j]) == 1:
+                max_index = j
         temp = flights[i]
-        flights[i] = flights[max]
-        flights[max] = temp
+        flights[i] = flights[max_index]
+        flights[max_index] = temp
     return flights
 
 
@@ -69,8 +86,7 @@ class net(nn.Module):
         return pred
 
     def ranking_flights(self, flights):
-        # TODO:
-        return 0
+        return rank_by_predicted_comparator(flights, self.prediction)
 
 
 class SVM(object):
@@ -101,8 +117,7 @@ class SVM(object):
         return np.argmax(res)
 
     def ranking_flights(self, flights):
-        # TODO:
-        return 0
+        return rank_by_predicted_comparator(flights, self.prediction)
 
 
 def from_rank_to_train_set(flights):
@@ -124,10 +139,17 @@ def from_rank_to_train_set(flights):
     return training_set
 
 
+def evaluate_ranking(real_ranking, predicted_ranking):
+    ham_dis = 0
+    for i in range(len(real_ranking)):
+        ham_dis += abs(predicted_ranking.index(real_ranking[i]) - i)
+    return ham_dis
+
+
 def learn(flights):
     num_of_flights = len(flights)
 
-    good_ranking_flights = ranking_flights_by_user(flights)
+    good_ranking_flights = ranking_flights_by_automatic_user(flights, sum_automatic_user)
 
     _net = net()
     optimizer = optim.SGD(_net.parameters(), lr=0.01)
@@ -138,10 +160,15 @@ def learn(flights):
         svm_rank = _svm.ranking_flights(flights)
         net_rank = _net.ranking_flights(flights)
 
-        svm_top_5 = ranking_flights_by_user(svm_rank[0 - 5])
-        net_top_5 = ranking_flights_by_user(net_rank[0 - 5])
+        svm_top_5 = ranking_flights_by_automatic_user(svm_rank[0 - 5], sum_automatic_user)
+        net_top_5 = ranking_flights_by_automatic_user(net_rank[0 - 5], sum_automatic_user)
 
         # TODO: put here method for evaluation the ranking
+        """
+        SHOULD WE REALLY EVALUATE ONLY BY RANKING, AND NOT BY PARIS AND THEIR COMPARING?
+        """
+        svm_eval = evaluate_ranking(good_ranking_flights, svm_top_5)
+        net_eval = evaluate_ranking(good_ranking_flights, net_top_5)
 
         svm_set_train = from_rank_to_train_set(svm_top_5)
         net_set_train = from_rank_to_train_set(net_top_5)
@@ -150,3 +177,18 @@ def learn(flights):
         _net.train_net(optimizer, net_set_train)
 
     print("here!")
+
+
+if __name__ == "__main__":
+    from SkyScanner import get_flights
+    flights = get_flights()
+    print(f"got {len(flights)} flights")
+    np.random.shuffle(flights)
+    fs = flights[:5]
+    fs2 = fs
+    ranked = ranking_flights_by_automatic_user(fs, sum_automatic_user)
+    print("\n".join([flight_to_string(f) for f in ranked]))
+    print("--------------------------")
+    ranked = ranking_flights_by_automatic_user(fs2, greedy_automatic_user)
+    print("\n".join([flight_to_string(f) for f in ranked]))
+

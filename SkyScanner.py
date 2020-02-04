@@ -8,8 +8,8 @@ from numpy import array
 attributes = ["Price", "Flight Duration", "Number of stops"]
 
 def get_session_key(country='US', currency='USD', locale='en-US', originPlace='SFO-sky',
-                    destinationPlace='LHR-sky', outboundDate='2020-02-01', adults='1',
-                    inboundDate='2020-02-10', cabinClass='business', children='0', infants='0') -> str:
+                    destinationPlace='LHR-sky', outboundDate='2020-05-01', adults='1',
+                    inboundDate='2020-05-10', cabinClass='business', children='0', infants='0') -> str:
     """
     Sends POST msg to server to get a session key.
     MUST
@@ -118,8 +118,8 @@ def poll_session_results(session_key: str, sortType='price', sortOrder='asc', du
 
 
 def get_flights(country='US', currency='USD', locale='en-US', originPlace='SFO-sky',
-                         destinationPlace='LHR-sky', outboundDate='2020-02-01', adults='1',
-                         inboundDate='2020-02-10', cabinClass='business', children='0', infants='0',
+                         destinationPlace='LHR-sky', outboundDate='2020-05-01', adults='1',
+                         inboundDate='2020-05-10', cabinClass='business', children='0', infants='0',
                          sortType='price', sortOrder='asc', duration='1800', pageIndex='0',
                          pageSize='100') -> array:
     """

@@ -184,7 +184,7 @@ def auto_agent_svm(flights, learn_idx, lr, lam):
     return test_succ / test_sum
 
 
-def get_smart_priorty(flights, num):
+def get_smart_priority(flights, num):
     ind_best_each = np.zeros(num, dtype=int)
     n = len(flights)
 
@@ -197,7 +197,25 @@ def get_smart_priorty(flights, num):
     if features < num:
         s = max(ind_best_each)
         for j in range(features, num):
-            ind_best_each[j] = s + j - features + 1;
+            ind_best_each[j] = s + j - features + 1
+
+    return ind_best_each
+
+
+def get_multiply_priority(flights, num):
+    ind_best_each = np.zeros(num, dtype=int)
+    n = len(flights)
+
+    run = min(features, num)
+    for i in range(0, n - (num - features - 1)):
+        for j in range(0, run):
+            s = ind_best_each[j]
+            if flights[s][j] > flights[i][j]:
+                ind_best_each[j] = i
+    if features < num:
+        s = max(ind_best_each)
+        for j in range(features, num):
+            ind_best_each[j] = s + j - features + 1
 
     return ind_best_each
 
@@ -211,13 +229,13 @@ def learn(flights):
     # priority = np.array([flights[i] for i in get_priority([flight_to_string(flight) for flight in flights[:5]])])
 
     rand_priority = np.random.randint(0, num_of_flights - 1, 5)
-    smart_priority = get_smart_priorty(flights, 5)
+    smart_priority = get_smart_priority(flights, 5)
 
     runs = 1
     lr_p = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
     best_lr1 = np.zeros(len(lr_p))
     best_lr2 = np.zeros(len(lr_p))
-    # test 1:nets: smart choise vs. rand choise
+    # test 1:nets: smart choice vs. rand choice
 
     # for lr in range(0, len(lr_p)):
     # for lr in range(0, 1):
