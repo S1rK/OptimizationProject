@@ -145,7 +145,7 @@ class net(nn.Module):
 
 
 class SVM(object):
-    def __init__(self, _eta=0.5, lambd=0.5):
+    def __init__(self, _eta=0.2, lambd=0.2):
         self.num_of_class = 2
         self._w = np.zeros((self.num_of_class, input))
         self._b = np.zeros(self.num_of_class)
@@ -153,14 +153,20 @@ class SVM(object):
         self._lambda = lambd
 
     def train_svm(self, training_set):
-        for x, y in training_set:
-            y_hat = int(self.prediction(x))
-            if y_hat != y:
-                self._w[y, :] = (1 - self.eta * self._lambda) * self._w[y, :] + self.eta * x
-                self._w[y_hat, :] = (1 - self.eta * self._lambda) * self._w[y_hat, :] - self.eta * x
-                for j in range(0, self.num_of_class):
-                    if j != y and j != y_hat:
-                        self._w[j, :] = (1 - self.eta * self._lambda) * self._w[j, :]
+        x = len(training_set)
+        print(x)
+        for k in range(0,5):
+            np.random.shuffle(training_set)
+            for x, y in training_set:
+                y_hat = int(self.prediction(x))
+                if y_hat != y:
+                    self._w[y, :] = (1 - self.eta * self._lambda) * self._w[y, :] + self.eta * x
+                    self._w[y_hat, :] = (1 - self.eta * self._lambda) * self._w[y_hat, :] - self.eta * x
+                    a = self._w[y_hat, :]
+                    for j in range(0, self.num_of_class):
+                        if j != y and j != y_hat:
+                            self._w[j, :] = (1 - self.eta * self._lambda) * self._w[j, :]
+        print(self._w)
 
     def prediction(self, x):
         res = np.dot(self._w, np.transpose(x))
@@ -196,13 +202,11 @@ def evaluate_model_by_auto_user(validation_set: np.array, auto_user_comparator: 
                                 model_prediction: Callable[[np.array, np.array], int]) -> float:
     length = len(validation_set)
     success = 0
-    for i in range(length):
-        flight1 = flights[i]
+    for i in range(0,length):
         for j in range(0, length):
             if i != j:
-                flight2 = flights[j]
-                x = np.concatenate([flight1, flight2], axis=0)
-                if auto_user_comparator(flight1, flight2) == model_prediction(x):
+                x = np.concatenate([flights[i], flights[j]], axis=0)
+                if auto_user_comparator(flights[i], flights[j]) == model_prediction(x):
                     success += 1
     return success / (length * (length - 1))
 
