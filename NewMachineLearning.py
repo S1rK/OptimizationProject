@@ -265,12 +265,8 @@ if __name__ == "__main__":
 
     learn(flights, greedy_automatic_user)
 
-    # fs2 = fs
     print("---------result-----------")
     ranked = ranking_flights_by_automatic_user(flights, greedy_automatic_user)
     ranked = ranked[:5]
-    print(ranked)
     print("\n".join([flight_to_string(f) for f in ranked[:5]]))
     print("--------------------------")
-    # ranked = ranking_flights_by_automatic_user(fs2, greedy_automatic_user)
-    # print("\n".join([flight_to_string(f) for f in ranked]))
