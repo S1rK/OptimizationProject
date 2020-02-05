@@ -79,18 +79,21 @@ def price_per_duration_automatic_user(flight1: np.array, flight2: np.array) -> i
 
 
 def ranking_flights_by_automatic_user(flights: np.array, automatic_user: Callable[[np.array, np.array], int]):
-    length = len(flights)
-    for i in range(0, length):
-        max_index = i
-        for j in range(i, length):
-            if automatic_user(flights[max_index], flights[j]) == 1:
-                max_index = j
-        # temp = flights[i]
-        # flights[i] = flights[max_index]
-        # flights[max_index] = temp
-        # swap between them
-        flights[i], flights[max_index] = flights[max_index], flights[i]
-    return flights
+    # length = len(flights)
+    # for i in range(0, length):
+    #     max_index = i
+    #     for j in range(i, length):
+    #         if automatic_user(flights[max_index], flights[j]) == 1:
+    #             max_index = j
+    #     # temp = flights[i]
+    #     # flights[i] = flights[max_index]
+    #     # flights[max_index] = temp
+    #     # swap between them
+    #     flights[i], flights[max_index] = flights[max_index], flights[i]
+    # return flights
+
+    from functools import cmp_to_key
+    return sorted(flights, key=cmp_to_key(lambda x, y: 1 if automatic_user(x, y) is 1 else -1))
 
 
 class net(nn.Module):
@@ -207,7 +210,12 @@ def evaluate_model_by_auto_user(validation_set: np.array, auto_user_comparator: 
     return success / (length * (length - 1))
 
 
-def learn(flights: np.array, auto_user_comparator: Callable[[np.array, np.array], int]):
+def learn(flights: np.array, auto_user_comparator: Callable[[np.array, np.array], int] = greedy_automatic_user):
+    # shuffle the flights
+    np.random.shuffle(flights)
+
+    print(f"num flights: {len(flights)}")
+
     _net = net()
     optimizer = optim.SGD(_net.parameters(), lr=0.1)
     _svm = SVM()
@@ -246,16 +254,19 @@ def learn(flights: np.array, auto_user_comparator: Callable[[np.array, np.array]
 if __name__ == "__main__":
     from SkyScanner import get_flights
 
+    # flights = get_flights(sortType="", sortOrder="")
     flights = get_flights()
-    print(f"got {len(flights)} flights")
     np.random.shuffle(flights)
+    flights = flights[:100]
 
     learn(flights, greedy_automatic_user)
 
     # fs2 = fs
     print("---------result-----------")
     ranked = ranking_flights_by_automatic_user(flights, greedy_automatic_user)
+    ranked = ranked[:5]
+    print(ranked)
     print("\n".join([flight_to_string(f) for f in ranked[:5]]))
-    # print("--------------------------")
+    print("--------------------------")
     # ranked = ranking_flights_by_automatic_user(fs2, greedy_automatic_user)
     # print("\n".join([flight_to_string(f) for f in ranked]))

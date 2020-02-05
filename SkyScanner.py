@@ -2,7 +2,8 @@ import http.client
 from time import sleep
 import json
 from numpy import array
-
+from typing import List
+import ast
 
 # attributes = ["Price", "Departure Time", "Arrival Time", "Flight Duration", "Number of stops"]
 attributes = ["Price", "Flight Duration", "Number of stops"]
@@ -56,7 +57,7 @@ def get_session_key(country='US', currency='USD', locale='en-US', originPlace='S
 
 
 def poll_session_results(session_key: str, sortType='price', sortOrder='asc', duration='1800', pageIndex='0',
-                             pageSize='100') -> array:
+                             pageSize='100') -> List[List[float]]:
     """
     Sends a GET Poll session results request which returns a {pagesize} number of flights, sorted by {sortType} in
     {sortOrder} order.
@@ -110,18 +111,18 @@ def poll_session_results(session_key: str, sortType='price', sortOrder='asc', du
     #         [float(flight["PricingOptions"][0]["Price"]), leg["Departure"], leg["Arrival"], int(leg["Duration"]),
     #          int(len(leg["Stops"]))]) for flight, leg in zip(flights, legs)])
 
-    flights_properties = array(
-        [array([float(flight["PricingOptions"][0]["Price"]), int(leg["Duration"]), int(len(leg["Stops"]))]) for
-         flight, leg in zip(flights, legs)])
+    flights_properties = [
+        [float(flight["PricingOptions"][0]["Price"]), float(leg["Duration"]), float(len(leg["Stops"]))] for flight, leg
+        in zip(flights, legs)]
 
     return flights_properties
 
 
-def get_flights(country='US', currency='USD', locale='en-US', originPlace='SFO-sky',
+def get_flights(numberOfFlights=100, country='US', currency='USD', locale='en-US', originPlace='SFO-sky',
                          destinationPlace='LHR-sky', outboundDate='2020-05-01', adults='1',
                          inboundDate='2020-05-10', cabinClass='business', children='0', infants='0',
                          sortType='price', sortOrder='asc', duration='1800', pageIndex='0',
-                         pageSize='100') -> array:
+                         pageSize='1000') -> array:
     """
     Sends a POST msg to server to get a session key (with the given parameters). Then, sends a GET Poll session results
     request, and returns the flights in a vector.
@@ -173,12 +174,24 @@ def get_flights(country='US', currency='USD', locale='en-US', originPlace='SFO-s
     results = None
     while results is None:
         try:
-            return poll_session_results(session_key=key, sortType=sortType, sortOrder=sortOrder, duration=duration,
+            results = poll_session_results(session_key=key, sortType=sortType, sortOrder=sortOrder, duration=duration,
                                         pageIndex=pageIndex, pageSize=pageSize)
+            print(f"got {len(results)} flights")
         except AssertionError as e:
             print(str(e))
             print("Failed getting session's results. Trying again.")
             print("------------------------------------------------------------------------------------------------")
+
+    # convert all the flights (as lists of floats) to strings
+    results = [str(x) for x in results]
+
+    # convert the list of flights to a set of flights, to get rid of all the duplicates
+    s = set(results)
+
+    # convert back the flights from strings to lists, and then to np.array, and return an np.array of them
+    results = array([array(ast.literal_eval(x)) for x in s])
+
+    return results
 
 
 def flight_to_string(flight: array) -> str:
@@ -188,6 +201,28 @@ def flight_to_string(flight: array) -> str:
 
 if __name__ == "__main__":
     # learn(0)
-    flights_ = get_flights()
-    print(flights_)
+    # flights_ = get_flights()
+    # print(flights_)
+
+    # fs = [[0.5, 0.3, 0.8], [0.5, 0.3, 0.8], [0.22, 0.354, 0.45], [0.5, 0.3, 0.8]]
+    # s = set()
+    # for f in fs:
+    #     f_str = str(f)
+    #     s.add(f_str)
+    #     print(f"current different flights: {len(s)}")
+    #
+    # yay = array([array(ast.literal_eval(x)) for x in s])
+    #
+    # print(yay)
+    # print(type(yay))
+    # print(type(yay[0]))
+    # print(type(yay[0][0]))
+
+    # fs = get_flights(sortType="", sortOrder="")
+    fs = get_flights()
+    print(fs)
+    print(len(fs))
+    print(type(fs))
+    print(type(fs[0]))
+    print(type(fs[0][0]))
 
