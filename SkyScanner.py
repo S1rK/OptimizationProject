@@ -118,7 +118,7 @@ def poll_session_results(session_key: str, sortType='price', sortOrder='asc', du
     return flights_properties
 
 
-def get_flights(numberOfFlights=100, country='US', currency='USD', locale='en-US', originPlace='SFO-sky',
+def get_flights(country='US', currency='USD', locale='en-US', originPlace='SFO-sky',
                          destinationPlace='LHR-sky', outboundDate='2020-05-01', adults='1',
                          inboundDate='2020-05-10', cabinClass='business', children='0', infants='0',
                          sortType='price', sortOrder='asc', duration='1800', pageIndex='0',

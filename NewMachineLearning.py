@@ -20,7 +20,7 @@ epoch = 3
 learn_feature = 0
 
 
-def rank_by_predicted_comparator(flights: np.array, predict: Callable[[np.array, np.array], int]):
+def rank_by_predicted_comparator(flights: np.array, predict: Callable[[np.array], int]):
     """
 
     :param flights:
@@ -151,7 +151,7 @@ class net(nn.Module):
 
 
 class SVM(object):
-    def __init__(self, _eta=0.2, lambd=0.2):
+    def __init__(self, _eta=0.001, lambd=0.001):
         self.num_of_class = 2
         self._w = np.zeros((self.num_of_class, input))
         self._b = np.zeros(self.num_of_class)
@@ -363,6 +363,10 @@ if __name__ == "__main__":
     training_set = create_training_set_by_auto_user(ranked_flights, greedy_automatic_user)
     print("created training set")
 
+    # from random import shuffle
+    # shuffle(training_set)
+    # training_set = training_set[:5]
+
     _svm.train_svm(training_set)
     print("trained model")
 
@@ -371,6 +375,31 @@ if __name__ == "__main__":
     print("svm eval:")
     print(evaluate_model_by_auto_user(flights, greedy_automatic_user, _svm.prediction))
 
+    print("---------svm recommend-----------")
+    svm_rank = rank_by_predicted_comparator(ranked_flights, _svm.prediction)
+    print("\n".join([flight_to_string(f) for f in svm_rank[:5]]))
+
+    # for i in range(len(svm_rank)-1):
+    #     f1 = svm_rank[i]
+    #     for j in range(i+1, len(svm_rank)-1):
+    #         f2 = svm_rank[j]
+    #         # print(
+    #         #     f"svm({i}, {j}) = {_svm.prediction(np.concatenate([f1, f2], axis=0))}\n")
+    #         # print(
+    #         #     f"svm({j}, {i}) = {_svm.prediction(np.concatenate([f2, f1], axis=0))}\n")
+    #         if _svm.prediction(np.concatenate([f1, f2], axis=0)) != 1:
+    #             print("---------NOT 1---------")
+    #             print(flight_to_string(f1))
+    #             print(flight_to_string(f2))
+    #             print("-----------------------")
+
+    print("---------result-----------")
+    ranked = ranking_flights_by_automatic_user(ranked_flights, greedy_automatic_user)
+    ranked = ranked[:5]
+    print("\n".join([flight_to_string(f) for f in ranked[:5]]))
+    print("--------------------------")
+
+    # exit
     exit()
 
     learn(flights, greedy_automatic_user)
