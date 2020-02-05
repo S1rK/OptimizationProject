@@ -7,7 +7,7 @@ from torch import optim
 import random
 from SkyScanner import attributes, flight_to_string
 from GUI import get_priority
-from typing import Callable
+from typing import Callable, List, Tuple
 
 # hyper : optimazer + Learning Rate
 # test 1: 5 random flights vs. 5 best of each features
@@ -30,12 +30,15 @@ def rank_by_predicted_comparator(flights: np.array, predict: Callable[[np.array,
     length = len(flights)
     flights_ranks = [0 for _ in range(length)]
     for i in range(0, length):
+        f1 = flights[i]
         for j in range(0, length):
-            x = np.concatenate([flights[i], flights[j]], axis=0)
-            if predict(x) == 0:
-                flights_ranks[i] += 1
-            else:
-                flights_ranks[j] += 1
+            if i != j:
+                f2 = flights[j]
+                x = np.concatenate([f1, f2], axis=0)
+                if predict(x) == 0:
+                    flights_ranks[i] += 1
+                else:
+                    flights_ranks[j] += 1
     return [f for f, _ in sorted(zip(flights, flights_ranks), key=lambda pair: pair[1], reverse=True)]
 
 
@@ -157,8 +160,7 @@ class SVM(object):
 
     def train_svm(self, training_set):
         x = len(training_set)
-        print(x)
-        for k in range(0,5):
+        for k in range(0, 5):
             np.random.shuffle(training_set)
             for x, y in training_set:
                 y_hat = int(self.prediction(x))
@@ -169,7 +171,6 @@ class SVM(object):
                     for j in range(0, self.num_of_class):
                         if j != y and j != y_hat:
                             self._w[j, :] = (1 - self.eta * self._lambda) * self._w[j, :]
-        print(self._w)
 
     def prediction(self, x):
         res = np.dot(self._w, np.transpose(x))
@@ -194,6 +195,28 @@ class SVM(object):
         return training_set
 
 
+def create_training_set_by_auto_user(flights: np.array,
+                                     auto_user_comparator: Callable[[np.array, np.array], int]) -> List[
+                                     Tuple[np.array, np.array]]:
+    data_to_learn = np.ndarray((0, features * 2))
+    labels = np.ndarray((0, 1), dtype=int)
+    length = len(flights)
+    for i in range(0, length):
+        f1 = flights[i]
+        for j in range(i + 1, length):
+            f2 = flights[j]
+            f1_to_f2 = auto_user_comparator(f1, f2)
+            f2_to_f1 = auto_user_comparator(f2, f1)
+            if f1_to_f2 != f2_to_f1:
+                c1 = np.concatenate([f1, f2], axis=0)
+                data_to_learn = np.append(data_to_learn, [c1], axis=0)
+                labels = np.append(labels, [[f1_to_f2]], axis=0)
+                c2 = np.concatenate([f2, f1], axis=0)
+                data_to_learn = np.append(data_to_learn, [c2], axis=0)
+                labels = np.append(labels, [[f2_to_f1]], axis=0)
+    return list(zip(data_to_learn, labels))
+
+
 def evaluate_ranking(real_ranking, predicted_ranking):
     ham_dis = 0
     for i in range(len(real_ranking)):
@@ -203,21 +226,69 @@ def evaluate_ranking(real_ranking, predicted_ranking):
 
 def evaluate_model_by_auto_user(validation_set: np.array, auto_user_comparator: Callable[[np.array, np.array], int],
                                 model_prediction: Callable[[np.array, np.array], int]) -> float:
-    length = len(validation_set)
+    length = len(flights)
+    num_of_iter = 0
     success = 0
-    for i in range(0,length):
+    for i in range(0, length):
+        f1 = flights[i]
         for j in range(0, length):
             if i != j:
-                x = np.concatenate([flights[i], flights[j]], axis=0)
-                if auto_user_comparator(flights[i], flights[j]) == model_prediction(x):
+                f2 = flights[j]
+
+                x = np.concatenate([f1, f2], axis=0)
+                if auto_user_comparator(f1, f2) == model_prediction(x):
                     success += 1
-    return success / (length * (length - 1))
+
+                x = np.concatenate([f2, f1], axis=0)
+                if auto_user_comparator(f2, f1) == model_prediction(x):
+                    success += 1
+
+                num_of_iter += 2
+    return success / num_of_iter
+
+
+# def old_learn(flights: np.array, auto_user_comparator: Callable[[np.array, np.array], int] = greedy_automatic_user):
+#     # shuffle the flights
+#     np.random.shuffle(flights)
+#
+#     print(f"num flights: {len(flights)}")
+#
+#     _net = net()
+#     optimizer = optim.SGD(_net.parameters(), lr=0.1)
+#     _svm = SVM()
+#
+#     for i in range(0, epoch):
+#         svm_rank = _svm.ranking_flights(flights)
+#         net_rank = _net.ranking_flights(flights)
+#
+#         print("svm eval:")
+#         print(evaluate_model_by_auto_user(flights, auto_user_comparator, _svm.prediction))
+#         print("net eval:")
+#         print(evaluate_model_by_auto_user(flights, auto_user_comparator, _net.prediction))
+#
+#         svm_top_5 = ranking_flights_by_automatic_user(svm_rank, auto_user_comparator)
+#         net_top_5 = ranking_flights_by_automatic_user(net_rank, auto_user_comparator)
+#
+#         # TODO: put here method for evaluation the ranking
+#         """
+#         SHOULD WE REALLY EVALUATE ONLY BY RANKING, AND NOT BY PARIS AND THEIR COMPARING?
+#         """
+#
+#         svm_set_train = _svm.from_rank_to_train_set(svm_top_5)
+#         net_set_train = _net.from_rank_to_train_set(net_top_5)
+#
+#         _svm.train_svm(svm_set_train)
+#         _net.train_net(optimizer, net_set_train)
+#
+#     print("---------svm recommend-----------")
+#     print("\n".join([flight_to_string(f) for f in svm_rank[:5]]))
+#     print("---------net recommend-----------")
+#     print("\n".join([flight_to_string(f) for f in net_rank[:5]]))
+#
+#     print("here!")
 
 
 def learn(flights: np.array, auto_user_comparator: Callable[[np.array, np.array], int] = greedy_automatic_user):
-    # shuffle the flights
-    np.random.shuffle(flights)
-
     print(f"num flights: {len(flights)}")
 
     _net = net()
@@ -225,31 +296,52 @@ def learn(flights: np.array, auto_user_comparator: Callable[[np.array, np.array]
     _svm = SVM()
 
     for i in range(0, epoch):
-        svm_rank = _svm.ranking_flights(flights)
-        net_rank = _net.ranking_flights(flights)
+        # svm_rank = _svm.ranking_flights(flights)
+        # net_rank = _net.ranking_flights(flights)
 
-        print("svm eval:")
-        print(evaluate_model_by_auto_user(flights, auto_user_comparator, _svm.prediction))
-        print("net eval:")
-        print(evaluate_model_by_auto_user(flights, auto_user_comparator, _net.prediction))
+        # print("svm eval:")
+        # print(evaluate_model_by_auto_user(flights, auto_user_comparator, _svm.prediction))
+        # print("net eval:")
+        # print(evaluate_model_by_auto_user(flights, auto_user_comparator, _net.prediction))
 
-        svm_top_5 = ranking_flights_by_automatic_user(svm_rank, auto_user_comparator)
-        net_top_5 = ranking_flights_by_automatic_user(net_rank, auto_user_comparator)
+        # svm_top_5 = ranking_flights_by_automatic_user(svm_rank, auto_user_comparator)
+        # net_top_5 = ranking_flights_by_automatic_user(net_rank, auto_user_comparator)
+
+        # train the models with the training set
+        # svm_set_train = _svm.from_rank_to_train_set(training_set)
+        # net_set_train = _net.from_rank_to_train_set(training_set)
 
         # TODO: put here method for evaluation the ranking
         """
         SHOULD WE REALLY EVALUATE ONLY BY RANKING, AND NOT BY PARIS AND THEIR COMPARING?
         """
 
-        svm_set_train = _svm.from_rank_to_train_set(svm_top_5)
-        net_set_train = _net.from_rank_to_train_set(net_top_5)
+        # shuffle the flights
+        np.random.shuffle(flights)
 
-        _svm.train_svm(svm_set_train)
-        _net.train_net(optimizer, net_set_train)
+        # get the current flights
+        current_flights = flights[:len(flights)//2]
+
+        # rank the current flights by the auto user comparator
+        ranked_flights = ranking_flights_by_automatic_user(current_flights, auto_user_comparator)
+
+        # create a training set by the ranked flights and the auto user comparator
+        training_set = create_training_set_by_auto_user(ranked_flights, auto_user_comparator)
+
+        # train the models with the training set
+        _svm.train_svm(training_set)
+        _net.train_net(optimizer, training_set)
+
+        print("svm eval:")
+        print(evaluate_model_by_auto_user(flights, auto_user_comparator, _svm.prediction))
+        print("net eval:")
+        print(evaluate_model_by_auto_user(flights, auto_user_comparator, _net.prediction))
 
     print("---------svm recommend-----------")
+    svm_rank = rank_by_predicted_comparator(flights, _svm.prediction)
     print("\n".join([flight_to_string(f) for f in svm_rank[:5]]))
     print("---------net recommend-----------")
+    net_rank = rank_by_predicted_comparator(flights, _net.prediction)
     print("\n".join([flight_to_string(f) for f in net_rank[:5]]))
 
     print("here!")
@@ -258,10 +350,28 @@ def learn(flights: np.array, auto_user_comparator: Callable[[np.array, np.array]
 if __name__ == "__main__":
     from SkyScanner import get_flights
 
-    # flights = get_flights(sortType="", sortOrder="")
     flights = get_flights()
     np.random.shuffle(flights)
     flights = flights[:100]
+
+    _svm = SVM()
+    print("got flights")
+
+    ranked_flights = ranking_flights_by_automatic_user(flights, greedy_automatic_user)
+    print("ranked flights")
+
+    training_set = create_training_set_by_auto_user(ranked_flights, greedy_automatic_user)
+    print("created training set")
+
+    _svm.train_svm(training_set)
+    print("trained model")
+
+    svm_rank = _svm.ranking_flights(flights)
+
+    print("svm eval:")
+    print(evaluate_model_by_auto_user(flights, greedy_automatic_user, _svm.prediction))
+
+    exit()
 
     learn(flights, greedy_automatic_user)
 
